@@ -62,6 +62,12 @@ def main() -> None:
         default=10,
         help="Max frames for video validation (default: 10)",
     )
+    parser.add_argument(
+        "--model", "-m",
+        default="inswapper",
+        choices=["inswapper", "ghost", "simswap"],
+        help="Face swap model (default: inswapper)",
+    )
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parent.parent
@@ -82,6 +88,7 @@ def main() -> None:
     print("=" * 60)
     print(f"Target: {target}")
     print(f"Source: {photo}")
+    print(f"Model: {args.model}")
     print()
 
     # Step 1: Validate image swap
@@ -90,15 +97,15 @@ def main() -> None:
         from src.face_swap_pipeline import load_models, swap_face_in_image
         import cv2
 
-        app, swapper = load_models()
-        print("  - Models loaded OK")
+        app, swapper, backend = load_models(model_name=args.model)
+        print(f"  - Models loaded OK ({args.model})")
 
         target_img = cv2.imread(str(target))
         source_img = cv2.imread(str(photo))
         if target_img is None or source_img is None:
             raise ValueError("Could not read images")
 
-        result = swap_face_in_image(app, swapper, source_img, target_img)
+        result = swap_face_in_image(app, swapper, backend, source_img, target_img)
         output_img = samples_dir / "validation_result.jpg"
         cv2.imwrite(str(output_img), result)
         print(f"  - Face swap OK -> {output_img}")
@@ -123,6 +130,7 @@ def main() -> None:
                 source_photo_path=photo,
                 output_path=output_video,
                 max_frames=args.max_frames,
+                model_name=args.model,
             )
             print(f"  - Video swap OK -> {output_video}")
         except Exception as e:

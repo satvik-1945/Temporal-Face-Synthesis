@@ -21,6 +21,7 @@ def cmd_swap_video(args: argparse.Namespace) -> None:
         output_path=args.output,
         max_frames=args.max_frames,
         fps_scale=args.fps_scale,
+        model_name=args.model,
     )
     print(f"Done! Output saved to: {output}")
 
@@ -30,7 +31,7 @@ def cmd_swap_image(args: argparse.Namespace) -> None:
     from src.face_swap_pipeline import load_models, swap_face_in_image
     import cv2
 
-    app, swapper = load_models()
+    app, swapper, backend = load_models(model_name=args.model)
     target_img = cv2.imread(str(args.target))
     source_img = cv2.imread(str(args.photo))
 
@@ -39,7 +40,7 @@ def cmd_swap_image(args: argparse.Namespace) -> None:
     if source_img is None:
         raise FileNotFoundError(f"Could not read: {args.photo}")
 
-    result = swap_face_in_image(app, swapper, source_img, target_img)
+    result = swap_face_in_image(app, swapper, backend, source_img, target_img)
     cv2.imwrite(str(args.output), result)
     print(f"Done! Output saved to: {args.output}")
 
@@ -55,6 +56,12 @@ def main() -> None:
     p_video.add_argument("--video", "-v", required=True, help="Input video path")
     p_video.add_argument("--photo", "-p", required=True, help="Source face photo")
     p_video.add_argument("--output", "-o", required=True, help="Output video path")
+    p_video.add_argument(
+        "--model", "-m",
+        default="inswapper",
+        choices=["inswapper", "ghost", "simswap"],
+        help="Face swap model (default: inswapper)",
+    )
     p_video.add_argument(
         "--max-frames",
         type=int,
@@ -74,6 +81,12 @@ def main() -> None:
     p_image.add_argument("--target", "-t", required=True, help="Target image (frame)")
     p_image.add_argument("--photo", "-p", required=True, help="Source face photo")
     p_image.add_argument("--output", "-o", required=True, help="Output image path")
+    p_image.add_argument(
+        "--model", "-m",
+        default="inswapper",
+        choices=["inswapper", "ghost", "simswap"],
+        help="Face swap model (default: inswapper)",
+    )
     p_image.set_defaults(func=cmd_swap_image)
 
     args = parser.parse_args()
