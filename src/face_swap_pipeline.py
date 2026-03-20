@@ -57,7 +57,6 @@ def load_models(model_path: Optional[Path] = None):
     swapper = insightface.model_zoo.get_model(
         str(model_path), download=False, download_zip=False
     )
-    swapper.prepare(ctx_id=0)
 
     return app, swapper
 
